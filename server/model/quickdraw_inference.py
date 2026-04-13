@@ -4,18 +4,15 @@ import torchvision.transforms as transforms
 from PIL import Image
 import io
 
-# -----------------------------
-# Class labels
-# -----------------------------
+
+
 classes = (
     "airplane", "bicycle", "book", "car", "chair",
     "clock", "house", "telephone", "tree", "umbrella"
 )
 
 
-# -----------------------------
-# Model definition
-# -----------------------------
+
 class QuickDrawModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -46,9 +43,7 @@ class QuickDrawModel(nn.Module):
         return x
 
 
-# -----------------------------
-# Load model + transforms
-# -----------------------------
+
 def load_model(model_path="quickdraw_model.pth"):
     model = QuickDrawModel()
     model.load_state_dict(torch.load(model_path, map_location="cpu"))
@@ -63,19 +58,54 @@ transform = transforms.Compose([
 ])
 
 
+def preprocess_png_bytes(png_bytes):
+    img = Image.open(io.BytesIO(png_bytes)).convert("L")
+
+    transform = transforms.Compose([
+        transforms.Resize((28, 28)),
+        transforms.ToTensor()
+    ])
+
+    x = transform(img)
+
+    # INVERT because QuickDraw dataset is white-on-black
+    x = 1.0 - x
+
+    x = x.unsqueeze(0)
+
+    # Debug save
+    debug_img = transforms.ToPILImage()(x.squeeze(0))
+    debug_img.save("/app/debug_downsampled.png")
+
+    return x
+
+
+
+
+
+
 # -----------------------------
 # PNG prediction helper
 # -----------------------------
 def predict_png_bytes(png_bytes: bytes, model: QuickDrawModel):
-    """
-    Accepts raw PNG bytes (from FastAPI UploadFile or base64 decode),
-    converts to grayscale 28x28, runs inference, returns class name.
-    """
-    img = Image.open(io.BytesIO(png_bytes)).convert("L")
-    x = transform(img).unsqueeze(0)  # shape: (1, 1, 28, 28)
+    x = preprocess_png_bytes(png_bytes)
 
     with torch.no_grad():
         outputs = model(x)
 
-    idx = torch.argmax(outputs, dim=1).item()
+    probs = torch.softmax(outputs, dim=1).squeeze(0)
+
+    print("\n[DEBUG] Class probabilities:")
+    for cls, p in zip(classes, probs.tolist()):
+        print(f"  {cls:<10} {p:.4f}")
+
+    idx = torch.argmax(probs).item()
+    confidence = probs[idx].item()
+
+    print(f"\n[DEBUG] Predicted: {classes[idx]} | Confidence: {confidence:.4f}\n")
+
     return classes[idx]
+
+
+
+

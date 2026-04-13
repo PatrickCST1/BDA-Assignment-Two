@@ -1,0 +1,37 @@
+body {
+    font-family: sans-serif;
+    text-align: center;
+    margin-top: 40px;
+}
+
+#container {
+    display: inline-block;
+}
+
+canvas {
+    border: 2px solid #333;
+    background: white;
+
+    /* Custom grey crosshair cursor */
+    cursor: url('data:image/svg+xml;utf8,\
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">\
+<line x1="16" y1="0" x2="16" y2="32" stroke="gray" stroke-width="2"/>\
+<line x1="0" y1="16" x2="32" y2="16" stroke="gray" stroke-width="2"/>\
+</svg>') 16 16, crosshair;
+}
+
+#controls {
+    margin-top: 15px;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    font-size: 16px;
+}
+
+#result {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+}

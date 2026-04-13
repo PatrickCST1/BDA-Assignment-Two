@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  client:
+    build: ./client
+    container_name: quickdraw-client
+    ports:
+      - "4000:4000"
+    depends_on:
+      - node
+    restart: unless-stopped
+
+  node:
+    build: ./server/core
+    container_name: quickdraw-node
+    ports:
+      - "3000:3000"
+    environment:
+      PYTHON_API_URL: "http://python:4001/predict"
+    depends_on:
+      - python
+    restart: unless-stopped
+
+  python:
+    build: ./server/model
+    container_name: quickdraw-python
+    ports:
+      - "4001:4001"
+    restart: unless-stopped
